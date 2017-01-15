@@ -2,29 +2,27 @@
 use <Wire.scad>
 
 //Options
-maxSize=5;
-
-rad=19;
-high=3.8;
-RingBreite=8;
-RingShift=0.5;
-
-LEDShift=1.5;
-LEDB=1;
-LEDL=10;
-LEDH=0.3;
-LEDPuffer=0.50;
-
-WireR=0.1;
-NetzteilL=16.25;
-NetzteilB=4.25;
-NetzteilH=3.2;
-ControllerL=8.5;
-ControllerB=4.5;
-ControllerH=2.3;
-
-midPoint=false;
 WoodOnly=false;
+Querschnitt=false;
+
+rad=190;
+HolzH=38;
+RingBreite=80;
+RingShift=5;
+
+LEDShift=15;
+LEDB=10;
+LEDL=100;
+LEDH=3;
+LEDPuffer=5;
+
+WireR=1;
+NetzteilL=162.5;
+NetzteilB=42.5;
+NetzteilH=32.0;
+ControllerL=85.0;
+ControllerB=45.0;
+ControllerH=23.0;
 
 Zacken=false;
 ZackenDicke=7;
@@ -75,30 +73,35 @@ module Print(nEck) {
     Lampe(nEck);
 }
 module Lampe(nEck) {
-//    color("Wheat") difference()
-    {
+    if(!Querschnitt)
         Wheel();
-//        Querschnitt();
-//        rotate(90) Querschnitt();
+    else {
+        color("Wheat") difference()
+        {
+            Wheel();
+            Querschnitt();
+            rotate(90) Querschnitt();
+        }
     }
     if(!WoodOnly) {
-    //    color("White") difference()
-        {
-            translate([0, 0, high-LEDH])
+        if(!Querschnitt) {
+            translate([0, 0, HolzH-LEDH])
                     Light();
-    //        translate([0, 0.25, 0]) Querschnitt();
-    //        rotate(90) translate([0, 0.25, 0]) Querschnitt();
+        }
+        else {
+            color("White") difference()
+            {
+                translate([0, 0, HolzH-LEDH])
+                        Light();
+                translate([0, 0.25, 0]) Querschnitt();
+                rotate(90) translate([0, 0.25, 0]) Querschnitt();
+            }
         }
         for(a=[45:90:360]) {
             rotate(a=a)
-                translate([0, -InnenRadius, high/2])
-                    Haken(0.25);
+                translate([0, -InnenRadius, HolzH/2])
+                    Haken(2.5);
         }
-    }
-    
-    if(midPoint) {
-        color("black")
-            cube(0.5, center=true);
     }
     module Light(HeightFactor=1) {
         for(a=[0:2:18]) {
@@ -127,22 +130,17 @@ module Lampe(nEck) {
         color("Wheat")
         {
             difference() {
-//                cylinder(r=AussenRadius, h=high, $fn=500);
-//                translate([0, 0, -1])
-//                    cylinder(r=InnenRadius, h=maxSize, $fn=500);
                 rotate_extrude(angle=360, $fn=500)
                 translate([InnenRadius, 0, 0])
-                {
                     polygon([
                         [0, 0],
-                        [0, high],
-                        [RingBreite/2, high-(RingBreite/2*tan(10))],
-                        [RingBreite, high-(RingBreite/2*tan(10))-(RingBreite/2*tan(15))],
+                        [0, HolzH],
+                        [RingBreite/2, HolzH-(RingBreite/2*tan(10))],
+                        [RingBreite, HolzH-(RingBreite/2*tan(10))-(RingBreite/2*tan(15))],
                         [RingBreite, 0]
                     ]);
-                }
                 
-                translate([0, 0, high-LEDH])
+                translate([0, 0, HolzH-LEDH])
                     Light(2);
             }
             if(Zacken) {
@@ -151,7 +149,7 @@ module Lampe(nEck) {
                     for(angle=[0:30:330]) {
                         rotate(a=angle, v=[0,0,1]) {
                             translate([-ZackenDicke/2, rad+RingBreite/2-2*RingShift, 0]) {
-                                linear_extrude(height=high)
+                                linear_extrude(height=HolzH)
                                     polygon([[0,0],[ZackenDicke,0],[ZackenDicke*0.8685,ZackenDicke],[ZackenDicke*0.1315,ZackenDicke]]);
                             }
                         }
@@ -161,28 +159,30 @@ module Lampe(nEck) {
         }
     }
     module Querschnitt() {
-        translate([0, AussenRadius/2, high/2])
-            cube([2*AussenRadius, AussenRadius, 2*high], true);
+        translate([0, AussenRadius/2, HolzH/2])
+            cube([2*AussenRadius, AussenRadius, 2*HolzH], true);
     }
     Management();
 }
 module Management() {
-    BodenDicke=0.5;
+    BodenDicke=8;
+    Abstand = 1;
     
     module Light(HeightFactor=1) {
-        translate([+InnenRadius/2, +(LEDB/2+ControllerB/2+LEDB/4), ControllerH+BodenDicke-LEDH])
+        LEDStegB = NetzteilH/2-Abstand;
+        translate([+InnenRadius/2, +(ControllerB+NetzteilH-LEDStegB)/2, ControllerH+BodenDicke-LEDH])
             scale([1, 1, HeightFactor]) LED();
-        translate([+InnenRadius/2, -(LEDB/2+ControllerB/2+LEDB/4), ControllerH+BodenDicke-LEDH])
+        translate([+InnenRadius/2, -(ControllerB+NetzteilH-LEDStegB)/2, ControllerH+BodenDicke-LEDH])
             scale([1, 1, HeightFactor]) LED();
-        translate([-InnenRadius/2, -(LEDB/2+ControllerB/2+LEDB/4), ControllerH+BodenDicke-LEDH])
+        translate([-InnenRadius/2, -(ControllerB+NetzteilH-LEDStegB)/2, ControllerH+BodenDicke-LEDH])
             scale([1, 1, HeightFactor]) LED();
-        translate([-InnenRadius/2, +(LEDB/2+ControllerB/2+LEDB/4), ControllerH+BodenDicke-LEDH])
+        translate([-InnenRadius/2, +(ControllerB+NetzteilH-LEDStegB)/2, ControllerH+BodenDicke-LEDH])
             scale([1, 1, HeightFactor]) LED();
     }
     
     if(Typ=="A") {
-        Abhang=10;
-        Radius=16.25/2+3.2;
+        Abhang=100;
+        Radius=NetzteilL/2+NetzteilH;
         translate([0, 0, Abhang]) {
             color("Wheat")
             difference() {
@@ -198,94 +198,32 @@ module Management() {
         for(i=[0:90:360]) {
             color("DimGray")
             rotate(a=i, v=[0, 0, 1])
-            translate([InnenRadius, 0, 0.5])
+            translate([InnenRadius, 0, 5])
                 rotate(a=atan((InnenRadius-Radius)/Abhang), v=[0, -1, 0])
                     cylinder(r=0.15, h=sqrt((InnenRadius-Radius)*(InnenRadius-Radius)+Abhang*Abhang), $fn=10);
         }
     }
     else {
-        translate([0, 0, high-(ControllerH+BodenDicke)]) {
-            color("Wheat")
+        translate([0, 0, HolzH-(ControllerH+BodenDicke)]) {
+            color("Wheat") difference() {
+                translate([-InnenRadius, -(ControllerB+NetzteilH)/2, 0])
+                    cube([2*InnenRadius, ControllerB+NetzteilH, ControllerH+BodenDicke]);
+                translate([-InnenRadius, -(ControllerB+2*Abstand)/2, BodenDicke])
+                    cube([2*InnenRadius, ControllerB+2*Abstand, ControllerH+BodenDicke]);
                 difference() {
-                    translate([-InnenRadius, -(ControllerB+NetzteilH)/2, 0])
-                        cube([2*InnenRadius, ControllerB+NetzteilH, ControllerH+BodenDicke]);
-                    translate([-InnenRadius-0.1, -(ControllerB+0.2)/2, BodenDicke])
-                        cube([2*InnenRadius+0.2, ControllerB+0.2, ControllerH+BodenDicke]);
-                    difference() {
-                        cylinder(r=AussenRadius-InnenRadius/2, h=high);
-                        cylinder(r=InnenRadius, h=high, $fn=500);
-                    }
-                    Light(1.5);
+                    cylinder(r=AussenRadius-InnenRadius/2, h=HolzH);
+                    cylinder(r=InnenRadius, h=HolzH, $fn=500);
                 }
+                Light(1.5);
+            }
             if(!WoodOnly) {
                     Light();
-                translate([-NetzteilL/6, -NetzteilB/2, high-NetzteilH]) {
+                translate([-NetzteilL/6, -NetzteilB/2, HolzH-NetzteilH]) {
                     Netzteil();
                     translate([0, 3, 0.5]) rotate(90) color("Red") Wire([0, 0, 0], [0, 2.5, 0], WireR);
                     translate([0, 2.5, 0.5]) rotate(90) color("Black") Wire([0, 0, 0], [0, 2.5, 0], WireR);
                 }
-                translate([-ControllerL-5, -ControllerB/2, BodenDicke]) {
-                    { //Wires
-    //            rotate(90) {
-    //                constInnenA=6.37035;
-    //                constInnenB=2.54353;
-    //                constAussen=6.67429;
-    //                translate([2*ControllerB/8, 0, 0]) color("White") {
-    //                    Wire([0, 0, ControllerH/2], [0, WireR, ControllerH/2], WireR);
-    //                    Wire([0, WireR, ControllerH/2], [0, WireR, WireR], WireR);
-    //                    Wire([0, WireR, WireR], [2*ControllerB/8, WireR, WireR], WireR);
-    //                    Wire([2*ControllerB/8, WireR, WireR], [2*ControllerB/8, constAussen+2*WireR, WireR], WireR);
-    //                    
-    //                    Wire([2*ControllerB/8, 14*WireR, WireR], [constInnenA, 14*WireR, WireR], WireR);
-    //                    Wire([constInnenA, 14*WireR, WireR], [constInnenA, constInnenB+2*WireR, WireR], WireR);
-    //                }
-    //                translate([3*ControllerB/8, 0, 0]) color("Blue") {
-    //                    Wire([0, 0, ControllerH/2], [0, WireR, ControllerH/2], WireR);
-    //                    Wire([0, WireR, ControllerH/2], [0, WireR, 3*WireR], WireR);
-    //                    Wire([0, WireR, 3*WireR], [ControllerB/8, WireR, 3*WireR], WireR);
-    //                    Wire([ControllerB/8, WireR, 3*WireR], [ControllerB/8, constAussen+4*WireR, 3*WireR], WireR);
-    //                    Wire([ControllerB/8, constAussen+4*WireR, 3*WireR], [ControllerB/8, constAussen+4*WireR, WireR], WireR);
-    //                    
-    //                    Wire([1*ControllerB/8, 14*WireR, 3*WireR], [constInnenA-1*ControllerB/8, 14*WireR, 3*WireR], WireR);
-    //                    Wire([constInnenA-1*ControllerB/8, 14*WireR, 3*WireR], [constInnenA-1*ControllerB/8, constInnenB+4*WireR, 3*WireR], WireR);
-    //                    Wire([constInnenA-1*ControllerB/8, constInnenB+4*WireR, 3*WireR], [constInnenA-1*ControllerB/8, constInnenB+4*WireR, WireR], WireR);
-    //                }
-    //                translate([4*ControllerB/8, 0, 0]) color("Green") {
-    //                    Wire([0, 0, ControllerH/2], [0, WireR, ControllerH/2], WireR);
-    //                    Wire([0, WireR, ControllerH/2], [0, WireR, 5*WireR], WireR);
-    //                    Wire([0, WireR, 5*WireR], [0, constAussen+6*WireR, 5*WireR], WireR);
-    //                    Wire([0, constAussen+6*WireR, 5*WireR], [0, constAussen+6*WireR, WireR], WireR);
-    //                    
-    //                    Wire([0*ControllerB/8, 14*WireR, 5*WireR], [constInnenA-2*ControllerB/8, 14*WireR, 5*WireR], WireR);
-    //                    Wire([constInnenA-2*ControllerB/8, 14*WireR, 5*WireR], [constInnenA-2*ControllerB/8, constInnenB+6*WireR, 5*WireR], WireR);
-    //                    Wire([constInnenA-2*ControllerB/8, constInnenB+6*WireR, 5*WireR], [constInnenA-2*ControllerB/8, constInnenB+6*WireR, WireR], WireR);
-    //                }
-    //                translate([5*ControllerB/8, 0, 0]) color("Red") {
-    //                    Wire([0, 0, ControllerH/2], [0, WireR, ControllerH/2], WireR);
-    //                    Wire([0, WireR, ControllerH/2], [0, WireR, 7*WireR], WireR);
-    //                    Wire([0, WireR, 7*WireR], [0, 3*WireR, 7*WireR], WireR);
-    //                    Wire([0, 3*WireR, 7*WireR], [-ControllerB/8+2*WireR, 3*WireR, 7*WireR], WireR);
-    //                    Wire([-ControllerB/8+2*WireR, 3*WireR, 7*WireR], [-ControllerB/8, 3*WireR, 7*WireR], WireR);
-    //                    Wire([-ControllerB/8, 3*WireR, 7*WireR], [-ControllerB/8, constAussen+8*WireR, 7*WireR], WireR);
-    //                    Wire([-ControllerB/8, constAussen+8*WireR, 7*WireR], [-ControllerB/8, constAussen+8*WireR, WireR], WireR);
-    //                    
-    //                    Wire([-1*ControllerB/8, 14*WireR, 7*WireR], [constInnenA-3*ControllerB/8, 14*WireR, 7*WireR], WireR);
-    //                    Wire([constInnenA-3*ControllerB/8, 14*WireR, 7*WireR], [constInnenA-3*ControllerB/8, constInnenB+8*WireR, 7*WireR], WireR);
-    //                    Wire([constInnenA-3*ControllerB/8, constInnenB+8*WireR, 7*WireR], [constInnenA-3*ControllerB/8, constInnenB+8*WireR, WireR], WireR);
-    //                }
-    //                translate([6*ControllerB/8, 0, 0]) color("DimGray") {
-    //                    Wire([0, 0, ControllerH/2], [0, 3*WireR, ControllerH/2], WireR);
-    //                    Wire([0, 3*WireR, ControllerH/2], [0, 3*WireR, 9*WireR], WireR);
-    //                    Wire([0, 3*WireR, 9*WireR], [-2*ControllerB/8, 3*WireR, 9*WireR], WireR);
-    //                    Wire([-2*ControllerB/8, 3*WireR, 9*WireR], [-2*ControllerB/8, constAussen+10*WireR, 9*WireR], WireR);
-    //                    Wire([-2*ControllerB/8, constAussen+10*WireR, 9*WireR], [-2*ControllerB/8, constAussen+10*WireR, WireR], WireR);
-    //                    
-    //                    Wire([-2*ControllerB/8, 14*WireR, 9*WireR], [constInnenA-4*ControllerB/8, 14*WireR, 9*WireR], WireR);
-    //                    Wire([constInnenA-4*ControllerB/8, 14*WireR, 9*WireR], [constInnenA-4*ControllerB/8, constInnenB+10*WireR, 9*WireR], WireR);
-    //                    Wire([constInnenA-4*ControllerB/8, constInnenB+10*WireR, 9*WireR], [constInnenA-4*ControllerB/8, constInnenB+10*WireR, WireR], WireR);
-    //                }
-    //            }
-                    }
+                translate([-1.5*ControllerL, -ControllerB/2, BodenDicke]) {
                     Controller();
                 }
             }
